@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Instituições</title>
+    <link rel="stylesheet" href="/css/theme.css" />
+    <link rel="stylesheet" href="/css/layout.css" />
+    <link rel="stylesheet" href="/css/components.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  </head>
+  <body onload="ensureAuth()">
+    <div class="layout">
+      <aside class="sidebar collapsed">
+        <div class="brand">
+          <img src="/img/logo.png" alt="Logo" />
+          <h1>Banco de Alimentos</h1>
+        </div>
+        <nav class="nav">
+          <a href="/inicio"
+            ><span class="ico"><i class="fa-solid fa-house"></i></span> Início</a
+          >
+          <a href="/doacoes"
+            ><span class="ico"><i class="fa-solid fa-gift"></i></span> Doações</a
+          >
+          <a href="/estoque"
+            ><span class="ico"><i class="fa-solid fa-warehouse"></i></span> Estoque</a
+          >
+          <a href="/doadores"
+            ><span class="ico"><i class="fa-solid fa-users"></i></span> Doadores</a
+          >
+          <a href="/instituicoes" class="active"
+            ><span class="ico"><i class="fa-solid fa-building-columns"></i></span> Instituições</a
+          >
+          <a href="/relatorios"
+            ><span class="ico"><i class="fa-solid fa-chart-line"></i></span> Relatórios</a
+          >
+        </nav>
+      </aside>
+
+      <main class="main">
+        <div class="topbar">
+          <div class="topbar-left">
+            <button class="hamburger" id="btnHamburger" aria-label="Abrir menu">
+              <i class="fa-solid fa-bars"></i>
+            </button>
+          </div>
+          <button class="toggle" onclick="toggleTheme()">🌗</button>
+          <div class="avatar">U</div>
+          <button id="btnLogout">Sair</button>
+        </div>
+
+        <div class="content">
+          <div id="alerts"></div>
+
+          <div class="card" style="margin-top: 8px">
+            <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center">
+              <input id="searchByName" placeholder="Buscar por nome..." style="max-width: 340px" />
+              <button class="ghost" id="btnClearSearch">Limpar</button>
+            </div>
+          </div>
+
+          <div class="cards">
+            <div class="card">
+              <div class="title">Novas Instituições (30 dias)</div>
+              <div class="value" id="kpi_novas_inst">0</div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div style="display: flex; justify-content: space-between; align-items: center">
+              <h2>Instituições</h2>
+              <button onclick="document.getElementById('dlgForm').style.display='block'"><i class="fa-solid fa-plus"></i> Adicionar</button>
+            </div>
+
+            <table class="table" id="grid">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Nome</th>
+                  <th>Tipo</th>
+                  <th>CNPJ</th>
+                  <th>Email</th>
+                  <th>Telefone</th>
+                  <th>Endereço</th>
+                  <th>Ações</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+
+          <div class="card" id="dlgForm" style="display: none" data-form="instituicao">
+            <h3 id="formTitle">Nova Instituição</h3>
+            <div class="form-grid">
+              <div><label>Nome</label><input id="i_nome" required /></div>
+              <div>
+                <label>Tipo</label>
+                <select id="i_tipo">
+                  <option>Creche</option>
+                  <option>Casa de Acolhimento</option>
+                  <option>Cozinha Solidária</option>
+                </select>
+              </div>
+              <div><label>CNPJ</label><input id="i_cnpj" /></div>
+              <div><label>Email</label><input id="i_email" type="email" /></div>
+              <div><label>Telefone</label><input id="i_telefone" /></div>
+              <div><label>Endereço</label><input id="i_endereco" /></div>
+            </div>
+            <br />
+            <button data-action="salvarInstituicao" onclick="salvarI()">Salvar</button>
+            <button class="secondary" onclick="cancelarI()">Cancelar</button>
+            <input type="hidden" id="i_id" />
+          </div>
+
+          <footer class="footer">© 2025 Banco de Alimentos de Londrina</footer>
+        </div>
+      </main>
+    </div>
+
+    <script src="/js/app.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="/js/validation.js"></script>
+
+    <script>
+      document.addEventListener("DOMContentLoaded", () => {
+        if (window.attachValidations) attachValidations();
+      });
+
+      async function carregarI() {
+        const novos = await api("/api/relatorios/novas-instituicoes");
+        document.getElementById("kpi_novas_inst").textContent = novos.qtd || 0;
+        const dados = await api("/api/instituicoes");
+
+        const grid = document.getElementById("grid");
+        const tbody = grid.querySelector("tbody");
+        tbody.innerHTML = "";
+
+        for (const d of dados) {
+          const tr = document.createElement("tr");
+          tr.innerHTML = `
+            <td>${d.id}</td>
+            <td>${d.nome}</td>
+            <td>${d.tipo || ""}</td>
+            <td>${d.cnpj || ""}</td>
+            <td>${d.email || ""}</td>
+            <td>${d.telefone || ""}</td>
+            <td>${d.endereco || ""}</td>
+            <td>
+              <button onclick="editarI(${d.id},'${d.nome.replace(/'/g, "\\'")}', '${(d.tipo || "").replace(/'/g, "\\'")}', '${(d.cnpj || "").replace(/'/g, "\\'")}', '${(d.email || "").replace(/'/g, "\\'")}', '${(d.telefone || "").replace(/'/g, "\\'")}', '${(d.endereco || "").replace(/'/g, "\\'")}')">
+                <i class="fa-solid fa-pen"></i>
+              </button>
+              <button class="danger" onclick="excluirI(${d.id})">
+                <i class="fa-solid fa-trash"></i>
+              </button>
+            </td>`;
+          tbody.appendChild(tr);
+        }
+
+        // Reativar busca + paginação sempre que recarregar os dados
+        inicializarBuscaPaginacao();
+      }
+
+      async function salvarI() {
+        const nome = i_nome.value.trim();
+        if (!nome) return alertBox("error", "Nome é obrigatório");
+
+        const payload = {
+          nome,
+          tipo: i_tipo.value,
+          cnpj: i_cnpj.value,
+          email: i_email.value,
+          telefone: i_telefone.value,
+          endereco: i_endereco.value,
+        };
+
+        try {
+          if (i_id.value) {
+            await api("/api/instituicoes/" + i_id.value, {
+              method: "PUT",
+              body: JSON.stringify(payload),
+            });
+            alertBox("success", "Atualizado");
+          } else {
+            await api("/api/instituicoes", {
+              method: "POST",
+              body: JSON.stringify(payload),
+            });
+            alertBox("success", "Cadastrado");
+          }
+          cancelarI();
+          carregarI();
+        } catch (e) {
+          alertBox("error", e.message);
+        }
+      }
+
+      function editarI(id, nome, tipo, cnpj, email, tel, end) {
+        i_id.value = id;
+        i_nome.value = nome;
+        i_tipo.value = tipo || "Creche";
+        i_cnpj.value = cnpj || "";
+        i_email.value = email || "";
+        i_telefone.value = tel || "";
+        i_endereco.value = end || "";
+        formTitle.innerText = "Editar Instituição";
+        dlgForm.style.display = "block";
+      }
+
+      function cancelarI() {
+        i_id.value = "";
+        i_nome.value = "";
+        i_tipo.value = "Creche";
+        i_cnpj.value = "";
+        i_email.value = "";
+        i_telefone.value = "";
+        i_endereco.value = "";
+        formTitle.innerText = "Nova Instituição";
+        dlgForm.style.display = "none";
+      }
+
+      async function excluirI(id) {
+        if (confirm("Confirma excluir?")) {
+          try {
+            await api("/api/instituicoes/" + id, { method: "DELETE" });
+            alertBox("success", "Excluído");
+            carregarI();
+          } catch (e) {
+            alertBox("error", e.message);
+          }
+        }
+      }
+
+      document.addEventListener("DOMContentLoaded", carregarI);
+
+      // Busca + Paginação (reativável)
+      function inicializarBuscaPaginacao() {
+        const table = document.getElementById("grid");
+        const searchInput = document.getElementById("searchByName");
+        const clearBtn = document.getElementById("btnClearSearch");
+        if (!table) return;
+        const tbody = table.querySelector("tbody");
+        const allRows = Array.from(tbody.querySelectorAll("tr"));
+        let filtered = allRows.slice();
+        let currentPage = 1;
+        const pageSize = 8;
+        let controls = table.nextElementSibling;
+        if (!controls || !controls.classList || !controls.classList.contains("paginacao")) {
+          controls = document.createElement("div");
+          controls.className = "paginacao";
+          table.after(controls);
+        }
+        function render() {
+          allRows.forEach((r) => (r.style.display = "none"));
+          const start = (currentPage - 1) * pageSize,
+            end = start + pageSize;
+          filtered.slice(start, end).forEach((r) => (r.style.display = ""));
+          controls.innerHTML = "";
+          const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
+          for (let p = 1; p <= totalPages; p++) {
+            const btn = document.createElement("button");
+            btn.textContent = p;
+            if (p === currentPage) btn.classList.add("active");
+            btn.addEventListener("click", () => {
+              currentPage = p;
+              render();
+            });
+            controls.appendChild(btn);
+          }
+        }
+        function applyFilter() {
+          const term = (searchInput?.value || "").toLowerCase();
+          filtered = term ? allRows.filter((r) => r.textContent.toLowerCase().includes(term)) : allRows.slice();
+          currentPage = 1;
+          render();
+        }
+        if (searchInput) {
+          searchInput.removeEventListener("input", applyFilter);
+          searchInput.addEventListener("input", applyFilter);
+        }
+        if (clearBtn) {
+          clearBtn.onclick = () => {
+            searchInput.value = "";
+            applyFilter();
+          };
+        }
+        render();
+      }
+    </script>
+  </body>
+</html>
