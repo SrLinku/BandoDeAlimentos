@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Relatorios</title>
+    <link rel="stylesheet" href="/css/theme.css" />
+    <link rel="stylesheet" href="/css/layout.css" />
+    <link rel="stylesheet" href="/css/components.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  </head>
+  <body onload="ensureAuth()">
+    <div class="layout">
+      <aside class="sidebar collapsed">
+        <div class="brand">
+          <img src="/img/logo.png" alt="Logo" />
+          <h1>Banco de Alimentos</h1>
+        </div>
+        <nav class="nav">
+          <a href="/inicio"
+            ><span class="ico"><i class="fa-solid fa-house"></i></span> Início</a
+          >
+          <a href="/doacoes"
+            ><span class="ico"><i class="fa-solid fa-gift"></i></span> Doações</a
+          >
+          <a href="/estoque"
+            ><span class="ico"><i class="fa-solid fa-warehouse"></i></span> Estoque</a
+          >
+          <a href="/doadores"
+            ><span class="ico"><i class="fa-solid fa-users"></i></span> Doadores</a
+          >
+          <a href="/instituicoes"
+            ><span class="ico"><i class="fa-solid fa-building-columns"></i></span> Instituições</a
+          >
+          <a href="/relatorios"
+            ><span class="ico"><i class="fa-solid fa-chart-line"></i></span> Relatórios</a
+          >
+        </nav>
+      </aside>
+      <main class="main">
+        <div class="topbar">
+          <div class="topbar-left">
+            <button class="hamburger" id="btnHamburger" aria-label="Abrir menu">
+              <i class="fa-solid fa-bars"></i>
+            </button>
+          </div>
+          <button class="toggle" onclick="toggleTheme()">🌗</button>
+          <div class="avatar">U</div>
+          <button id="btnLogout">Sair</button>
+        </div>
+        <div class="content">
+          <div id="alerts"></div>
+
+          <div class="report-grid">
+            <div class="card">
+              <h3>Alimentos mais doados</h3>
+              <div class="chart-wrapper">
+                <canvas id="barTopItens"></canvas>
+              </div>
+            </div>
+
+            <div class="card">
+              <h3>Distribuição por tipo de instituição</h3>
+              <div class="type-grid">
+                <div class="chart-wrapper"><canvas id="pieTipos"></canvas></div>
+                <div class="table-wrapper">
+                  <table class="table" id="miniGrid"></table>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <h3>Histórico de doações e distribuições</h3>
+            <div class="chart-wrapper">
+              <canvas id="lineHist"></canvas>
+            </div>
+          </div>
+
+          <script src="/js/app.js"></script>
+          <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+          <script src="/js/relatorios.js"></script>
+          <script>
+            loadRelatorios();
+          </script>
+          <script src="/js/validation.js"></script>
+          <script>
+            document.addEventListener("DOMContentLoaded", () => {
+              if (window.attachValidations) attachValidations();
+            });
+          </script>
+        </div>
+
+        <footer class="footer">© 2025 Banco de Alimentos de Londrina</footer>
+      </main>
+    </div>
+  </body>
+</html>
