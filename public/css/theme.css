@@ -1,0 +1,49 @@
+:root {
+    --verde: #2E6E3F;
+    --verde-escuro: #1f4b2b;
+    --bg: #f0f2f5;
+    --card: #fff;
+    --text: #1f1f1f;
+    --muted: #6b7280;
+    --accent: #2E6E3F;
+    --danger: #c62828;
+    --warning: #ffb300;
+    --success: #2e7d32;
+    --shadow: 0 8px 24px rgba(0, 0, 0, .08);
+}
+
+body.dark {
+    --bg: #0f1412;
+    --card: #151a17;
+    --text: #e8e8e8;
+    --muted: #a0a0a0;
+    --accent: #2E6E3F;
+    --shadow: 0 8px 24px rgba(0, 0, 0, .4);
+}
+
+body.dark .topbar {
+    background-color: #111 !important;
+    color: #fff !important;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, .4)
+}
+
+body.dark .topbar a,
+body.dark .topbar i,
+body.dark .topbar button {
+    color: #fff !important
+}
+
+body.dark .paginacao button {
+    background: #222;
+    color: #fff;
+    border-color: #444
+}
+
+body.dark .paginacao button.active {
+    background: #113d1a;
+    border-color: #2e7d32
+}
+
+:root {
+    --verde-claro: #4CAF50;
+}

@@ -1,0 +1,294 @@
+.alert {
+    padding: 12px;
+    border-radius: 12px;
+    margin: 10px 0
+}
+
+.alert.success {
+    background: rgba(46, 125, 50, .15);
+    color: #2e7d32
+}
+
+.alert.error {
+    background: rgba(198, 40, 40, .15);
+    color: #c62828
+}
+
+.chart-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 16px
+}
+
+.kpi {
+    display: flex;
+    align-items: center;
+    gap: 12px
+}
+
+.kpi .dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%
+}
+
+.kpi .title {
+    font-size: 12px;
+    color: var(--muted)
+}
+
+.kpi .value {
+    font-size: 22px;
+    font-weight: 800
+}
+
+.kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 18px;
+    margin-bottom: 22px;
+}
+
+.kpi-card {
+    border-radius: 12px;
+    padding: 16px;
+    text-align: center;
+    box-shadow: var(--shadow);
+    background: var(--card);
+    transition: transform 0.2s;
+}
+
+.kpi-card:hover {
+    transform: translateY(-4px);
+}
+
+.kpi-card h4 {
+    margin: 0 0 6px;
+    font-size: 14px;
+    color: #333;
+}
+
+.kpi-card p {
+    margin: 0;
+    font-size: 24px;
+    font-weight: 800;
+}
+
+.kpi-card.azul {
+    background: #e6f3ff;
+    color: #004085;
+}
+
+.kpi-card.vermelho {
+    background: #ffe6e6;
+    color: #c62828;
+}
+
+.kpi-card.amarelo {
+    background: #fff7e0;
+    color: #b85c00;
+}
+
+.dashboard-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 20px;
+}
+
+.chart-card,
+.alert-card {
+    border-radius: 16px;
+    box-shadow: var(--shadow);
+    background: var(--card);
+    padding: 18px;
+}
+
+.chart-container {
+    height: 300px;
+    margin-top: 10px;
+}
+
+.alert-card {
+    background: #fff3cd;
+    color: #333;
+}
+
+.alert-card h3 {
+    margin-top: 0;
+    font-size: 16px;
+}
+
+.alert-card ul {
+    list-style: none;
+    padding: 0;
+    margin: 10px 0 0;
+}
+
+.alert-card li {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 0;
+    font-weight: 500;
+}
+
+.alert-card li i {
+    font-size: 18px;
+    color: #b85c00;
+}
+
+.report-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+    gap: 18px;
+    margin-bottom: 18px;
+}
+
+.chart-wrapper {
+    width: 100%;
+    height: 400px;
+    margin-top: 10px;
+}
+
+.type-grid {
+    display: grid;
+    grid-template-columns: 1.1fr 0.9fr;
+    gap: 14px;
+    align-items: start;
+}
+
+.table-wrapper {
+    overflow-y: auto;
+    max-height: 380px;
+}
+
+.kpi-card.azul {
+    border-left: 6px solid #3B82F6;
+}
+
+.kpi-card.vermelho {
+    border-left: 6px solid #EF4444;
+}
+
+.kpi-card.amarelo {
+    border-left: 6px solid #F59E0B;
+}
+
+.alert-card ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: grid;
+    gap: 10px;
+}
+
+.alert-card li {
+    display: grid;
+    grid-template-columns: 20px 1fr;
+    align-items: start;
+    gap: 10px;
+}
+
+.kpi-grid {
+    display: grid;
+    gap: 14px;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.dashboard-grid {
+    display: grid;
+    gap: 16px;
+    grid-template-columns: 2fr 1fr;
+}
+
+.chart-card .chart-container {
+    height: 280px
+}
+
+@media (min-width: 1200px) {
+    .chart-card .chart-container {
+        height: 320px
+    }
+}
+
+
+@media (max-width: 1200px) {
+    .chart-wrapper {
+        height: 340px;
+    }
+}
+
+@media (max-width: 992px) {
+    .dashboard-grid {
+        grid-template-columns: 1fr
+    }
+}
+
+@media (max-width: 900px) {
+    .dashboard-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .chart-container {
+        height: 240px;
+    }
+
+    .type-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .chart-wrapper {
+        height: 300px;
+    }
+}
+
+@media (max-width: 600px) {
+    .report-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .chart-wrapper {
+        height: 260px;
+    }
+
+    .table-wrapper {
+        max-height: 280px;
+    }
+}
+
+.btn,
+.btn.btn-secondary {
+    margin-top: 10px;
+    width: 100%;
+    display: inline-block;
+    text-align: center;
+    box-sizing: border-box;
+}
+
+.paginacao {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+    justify-content: center;
+    margin-top: 12px;
+    flex-wrap: wrap
+}
+
+.paginacao button {
+    padding: 6px 10px;
+    border: 1px solid #ccc;
+    background: #fff;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background .2s
+}
+
+.paginacao button:hover {
+    background: #e8f5e9
+}
+
+.paginacao button.active {
+    background: #2e7d32;
+    color: #fff;
+    border-color: #1b5e20
+}
