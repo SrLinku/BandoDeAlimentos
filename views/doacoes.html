@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Doações</title>
+    <link rel="stylesheet" href="/css/theme.css" />
+    <link rel="stylesheet" href="/css/layout.css" />
+    <link rel="stylesheet" href="/css/components.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  </head>
+  <body onload="ensureAuth()">
+    <div class="layout">
+      <aside class="sidebar collapsed">
+        <div class="brand">
+          <img src="/img/logo.png" alt="Logo" />
+          <h1>Banco de Alimentos</h1>
+        </div>
+        <nav class="nav">
+          <a href="/inicio"
+            ><span class="ico"><i class="fa-solid fa-house"></i></span> Início</a
+          >
+          <a href="/doacoes" class="active"
+            ><span class="ico"><i class="fa-solid fa-gift"></i></span> Doações</a
+          >
+          <a href="/estoque"
+            ><span class="ico"><i class="fa-solid fa-warehouse"></i></span> Estoque</a
+          >
+          <a href="/doadores"
+            ><span class="ico"><i class="fa-solid fa-users"></i></span> Doadores</a
+          >
+          <a href="/instituicoes"
+            ><span class="ico"><i class="fa-solid fa-building-columns"></i></span> Instituições</a
+          >
+          <a href="/relatorios"
+            ><span class="ico"><i class="fa-solid fa-chart-line"></i></span> Relatórios</a
+          >
+        </nav>
+      </aside>
+
+      <main class="main">
+        <div class="topbar">
+          <div class="topbar-left">
+            <button class="hamburger" id="btnHamburger">
+              <i class="fa-solid fa-bars"></i>
+            </button>
+          </div>
+          <button class="toggle" onclick="toggleTheme()">🌗</button>
+          <div class="avatar">U</div>
+          <button id="btnLogout">Sair</button>
+        </div>
+
+        <div class="content">
+          <div id="alerts"></div>
+          <div class="card">
+            <h2>Doações</h2>
+
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, auto)); align-items: center; gap: 8px; margin-top: 12px">
+              <input id="buscaDoador" placeholder="Buscar por doador..." />
+              <input id="buscaData" type="date" />
+              <button onclick="filtrar()">Filtrar</button>
+              <button class="ghost" onclick="limparFiltro()">Limpar</button>
+              <button onclick="document.getElementById('dlgForm').style.display='block'"><i class="fa-solid fa-plus"></i> Registrar Doação</button>
+            </div>
+
+            <table class="table" id="grid" style="margin-top: 16px">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Data</th>
+                  <th>Doador</th>
+                  <th>Observação</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+
+          <!-- Modal -->
+          <div class="card" id="dlgForm" style="display: none">
+            <h3>Nova Doação</h3>
+            <div class="form-grid">
+              <div>
+                <label>Doador</label
+                ><select id="doadorSel"></select>
+              </div>
+              <div><label>Data</label><input type="date" id="data_doacao" /></div>
+              <div><label>Observação</label><input id="observacao" /></div>
+            </div>
+            <h3>Itens</h3>
+            <table class="table" id="itensTab">
+              <tr>
+                <th>Item</th>
+                <th>Qtd</th>
+                <th>Unidade</th>
+                <th>Validade</th>
+                <th>Lote</th>
+                <th></th>
+              </tr>
+            </table>
+            <button id="btnAddLinha">Adicionar Item</button><br /><br />
+            <button onclick="salvarDoacao()">Salvar Doação</button>
+            <button class="secondary" onclick="dlgForm.style.display='none'">Cancelar</button>
+          </div>
+        </div>
+
+        <footer class="footer">© 2025 Banco de Alimentos de Londrina</footer>
+      </main>
+    </div>
+
+    <script src="/js/app.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="/js/validation.js"></script>
+
+    <script>
+      let itensCatalogo = [];
+      function addLinha() {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td><select class="it_item">${itensCatalogo.map((i) => `<option value="${i.id}">${i.nome}</option>`).join("")}</select></td>
+          <td><input class="it_qtd" type="number" min="0.1" step="0.1" value="1"></td>
+          <td><select class="it_uni"><option>kg</option><option>un</option><option>l</option></select></td>
+          <td><input class="it_val" type="date"></td>
+          <td><input class="it_lote" placeholder="Lote"></td>
+          <td><button class="danger" onclick="this.closest('tr').remove()">Remover</button></td>`;
+        itensTab.appendChild(tr);
+      }
+
+      async function carregarCombos() {
+        const doadores = await api("/api/doadores");
+        doadorSel.innerHTML = doadores.map((d) => `<option value="${d.id}">${d.nome}</option>`).join("");
+        itensCatalogo = await api("/api/itens");
+      }
+
+      async function carregarDoacoes(params = {}) {
+        const q = new URLSearchParams(params).toString();
+        const dados = await api("/api/doacoes" + (q ? `?${q}` : ""));
+        const tbody = document.querySelector("#grid tbody");
+        tbody.innerHTML = "";
+        for (const r of dados) {
+          const tr = document.createElement("tr");
+          tr.innerHTML = `<td>${r.id}</td><td>${new Date(r.data_doacao).toLocaleDateString()}</td><td>${r.doador}</td><td>${r.observacao || ""}</td>`;
+          tbody.appendChild(tr);
+        }
+        inicializarPaginacao();
+      }
+
+      function filtrar() {
+        const p = {};
+        if (buscaDoador.value.trim()) p.doador = buscaDoador.value.trim();
+        if (buscaData.value) p.data = buscaData.value;
+        carregarDoacoes(p);
+      }
+
+      function limparFiltro() {
+        buscaDoador.value = "";
+        buscaData.value = "";
+        carregarDoacoes();
+      }
+
+      async function salvarDoacao() {
+        const itens = Array.from(document.querySelectorAll("#itensTab tr"))
+          .slice(1)
+          .map((tr) => ({
+            item_id: parseInt(tr.querySelector(".it_item").value),
+            quantidade: parseFloat(tr.querySelector(".it_qtd").value),
+            unidade: tr.querySelector(".it_uni").value,
+            validade: tr.querySelector(".it_val").value || null,
+            lote: tr.querySelector(".it_lote").value || null,
+          }))
+          .filter((i) => !isNaN(i.item_id) && i.quantidade > 0);
+        if (itens.length === 0) return alertBox("error", "Inclua pelo menos um item");
+        await api("/api/doacoes", {
+          method: "POST",
+          body: JSON.stringify({
+            doador_id: parseInt(doadorSel.value),
+            data_doacao: data_doacao.value || null,
+            observacao: observacao.value,
+            itens,
+          }),
+        });
+        alertBox("success", "Doação registrada com sucesso");
+        dlgForm.style.display = "none";
+        await carregarDoacoes();
+      }
+
+      function inicializarPaginacao() {
+        const table = document.getElementById("grid");
+        const tbody = table.querySelector("tbody");
+        const allRows = Array.from(tbody.querySelectorAll("tr"));
+        const pageSize = 8;
+        let currentPage = 1;
+        let controls = table.nextElementSibling;
+        if (!controls || !controls.classList.contains("paginacao")) {
+          controls = document.createElement("div");
+          controls.className = "paginacao";
+          table.after(controls);
+        }
+        function render() {
+          allRows.forEach((r) => (r.style.display = "none"));
+          const start = (currentPage - 1) * pageSize,
+            end = start + pageSize;
+          allRows.slice(start, end).forEach((r) => (r.style.display = ""));
+          controls.innerHTML = "";
+          const totalPages = Math.ceil(allRows.length / pageSize);
+          for (let p = 1; p <= totalPages; p++) {
+            const btn = document.createElement("button");
+            btn.textContent = p;
+            if (p === currentPage) btn.classList.add("active");
+            btn.onclick = () => {
+              currentPage = p;
+              render();
+            };
+            controls.appendChild(btn);
+          }
+        }
+        render();
+      }
+
+      document.addEventListener("DOMContentLoaded", async () => {
+        await carregarCombos();
+        await carregarDoacoes();
+        addLinha();
+        btnAddLinha.addEventListener("click", addLinha);
+      });
+    </script>
+  </body>
+</html>
