@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Estoque</title>
+    <link rel="stylesheet" href="/css/theme.css" />
+    <link rel="stylesheet" href="/css/layout.css" />
+    <link rel="stylesheet" href="/css/components.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  </head>
+  <body onload="ensureAuth()">
+    <div class="layout">
+      <aside class="sidebar collapsed">
+        <div class="brand">
+          <img src="/img/logo.png" alt="Logo" />
+          <h1>Banco de Alimentos</h1>
+        </div>
+        <nav class="nav">
+          <a href="/inicio"><i class="fa-solid fa-house"></i> Início</a>
+          <a href="/doacoes"><i class="fa-solid fa-gift"></i> Doações</a>
+          <a href="/estoque" class="active"><i class="fa-solid fa-warehouse"></i> Estoque</a>
+          <a href="/doadores"><i class="fa-solid fa-users"></i> Doadores</a>
+          <a href="/instituicoes"><i class="fa-solid fa-building-columns"></i> Instituições</a>
+          <a href="/relatorios"><i class="fa-solid fa-chart-line"></i> Relatórios</a>
+        </nav>
+      </aside>
+
+      <main class="main">
+        <div class="topbar">
+          <div class="topbar-left">
+            <button class="hamburger" id="btnHamburger">
+              <i class="fa-solid fa-bars"></i>
+            </button>
+          </div>
+          <button class="toggle" onclick="toggleTheme()">🌗</button>
+          <div class="avatar">U</div>
+          <button id="btnLogout">Sair</button>
+        </div>
+
+        <div class="content">
+          <div id="alerts"></div>
+          <div class="cards">
+            <div class="card">
+              <div class="title">Total Recebido</div>
+              <div class="value" id="kpi_est_receb">0</div>
+            </div>
+            <div class="card">
+              <div class="title">Total Distribuído</div>
+              <div class="value" id="kpi_est_dist">0</div>
+            </div>
+            <div class="card">
+              <div class="title">Alimentos em Risco</div>
+              <div class="value" id="kpi_est_risco">0</div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="form-grid">
+              <input id="f_item" placeholder="Item ou lote" />
+              <input type="date" id="f_de" />
+              <input type="date" id="f_ate" />
+              <button onclick="filtrarE()">Filtrar</button>
+              <button class="ghost" onclick="limparE()">Limpar Filtros</button>
+            </div>
+
+            <table class="table" id="grid">
+              <thead>
+                <tr>
+                  <th>Item</th>
+                  <th>Lote</th>
+                  <th>Validade</th>
+                  <th>Saldo</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+
+        <footer class="footer">© 2025 Banco de Alimentos de Londrina</footer>
+      </main>
+    </div>
+
+    <script src="/js/app.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="/js/validation.js"></script>
+
+    <script>
+      async function carregarKPIs() {
+        const [rec, dist, risco] = await Promise.all([api("/api/relatorios/total-recebido"), api("/api/relatorios/total-distribuido"), api("/api/relatorios/risco-lotes")]);
+        kpi_est_receb.textContent = rec.total || 0;
+        kpi_est_dist.textContent = dist.total || 0;
+        kpi_est_risco.textContent = risco.qtd || 0;
+      }
+
+      async function carregarE(params = {}) {
+        const q = new URLSearchParams(params).toString();
+        const dados = await api("/api/estoque" + (q ? `?${q}` : ""));
+        const tbody = document.querySelector("#grid tbody");
+        tbody.innerHTML = "";
+
+        for (const r of dados) {
+          const dt = r.validade ? new Date(r.validade) : null;
+          let badge = '<span class="badge ok">OK</span>';
+          if (dt) {
+            const dias = Math.ceil((dt - new Date()) / 86400000);
+            if (dias <= 0) badge = '<span class="badge danger">Vencido</span>';
+            else if (dias <= 15) badge = '<span class="badge warn">A vencer</span>';
+          }
+          const tr = document.createElement("tr");
+          tr.innerHTML = `<td>${r.item}</td><td>${r.lote}</td><td>${dt ? dt.toLocaleDateString() : "-"}</td><td>${r.saldo}</td><td>${badge}</td>`;
+          tbody.appendChild(tr);
+        }
+
+        inicializarPaginacao();
+      }
+
+      function filtrarE() {
+        const p = {};
+        if (f_item.value.trim()) p.busca = f_item.value.trim();
+        if (f_de.value) p.de = f_de.value;
+        if (f_ate.value) p.ate = f_ate.value;
+        carregarE(p);
+      }
+
+      function limparE() {
+        f_item.value = "";
+        f_de.value = "";
+        f_ate.value = "";
+        carregarE();
+      }
+
+      function inicializarPaginacao() {
+        const table = document.getElementById("grid");
+        const tbody = table.querySelector("tbody");
+        const allRows = Array.from(tbody.querySelectorAll("tr"));
+        const pageSize = 8;
+        let currentPage = 1;
+        let controls = table.nextElementSibling;
+        if (!controls || !controls.classList.contains("paginacao")) {
+          controls = document.createElement("div");
+          controls.className = "paginacao";
+          table.after(controls);
+        }
+        function render() {
+          allRows.forEach((r) => (r.style.display = "none"));
+          const start = (currentPage - 1) * pageSize,
+            end = start + pageSize;
+          allRows.slice(start, end).forEach((r) => (r.style.display = ""));
+          controls.innerHTML = "";
+          const totalPages = Math.ceil(allRows.length / pageSize);
+          for (let p = 1; p <= totalPages; p++) {
+            const btn = document.createElement("button");
+            btn.textContent = p;
+            if (p === currentPage) btn.classList.add("active");
+            btn.onclick = () => {
+              currentPage = p;
+              render();
+            };
+            controls.appendChild(btn);
+          }
+        }
+        render();
+      }
+
+      document.addEventListener("DOMContentLoaded", async () => {
+        await carregarKPIs();
+        await carregarE();
+      });
+    </script>
+  </body>
+</html>
