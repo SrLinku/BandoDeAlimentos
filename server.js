@@ -34,7 +34,7 @@ async function query(sql, params = []) {
 }
 
 // Views
-app.get("/", (req, res) => res.sendFile(path.join(__dirname, "views", "login.html")));
+app.get("/", (req, res) => res.sendFile(path.join(__dirname, "index.html")));
 app.get("/inicio", (req, res) => res.sendFile(path.join(__dirname, "views", "inicio.html")));
 app.get("/doacoes", (req, res) => res.sendFile(path.join(__dirname, "views", "doacoes.html")));
 app.get("/doadores", (req, res) => res.sendFile(path.join(__dirname, "views", "doadores.html")));
